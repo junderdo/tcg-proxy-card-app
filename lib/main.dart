@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 
+import 'bluetooth/ble_service.dart';
+import 'bluetooth/flutter_blue_plus_service.dart';
+import 'screens/app_shell.dart';
 import 'scryfall/scryfall_client.dart';
-import 'screens/home_screen.dart';
 
 void main() {
-  runApp(TcgProxyCardApp(client: ScryfallClient()));
+  runApp(
+    TcgProxyCardApp(
+      client: ScryfallClient(),
+      bluetooth: FlutterBluePlusService(),
+    ),
+  );
 }
 
 class TcgProxyCardApp extends StatelessWidget {
-  const TcgProxyCardApp({super.key, required this.client});
+  const TcgProxyCardApp({
+    super.key,
+    required this.client,
+    required this.bluetooth,
+  });
 
   final ScryfallClient client;
+  final BleService bluetooth;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +31,7 @@ class TcgProxyCardApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: HomeScreen(client: client),
+      home: AppShell(client: client, bluetooth: bluetooth),
     );
   }
 }

@@ -16,29 +16,40 @@ class PaginationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      height: 64,
-      child: Row(
-        children: [
-          TextButton.icon(
-            onPressed: onPrevious,
-            icon: const Icon(Icons.chevron_left),
-            label: const Text('Previous'),
-          ),
-          Expanded(
-            child: Text(
-              'Page $currentPage of $pageCount',
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+    final colors = Theme.of(context).colorScheme;
+    // Sits directly above the app's NavigationBar, so it uses the page
+    // surface and a divider instead of the same tinted bar color.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: BottomAppBar(
+        height: 56,
+        color: colors.surface,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          children: [
+            TextButton.icon(
+              onPressed: onPrevious,
+              icon: const Icon(Icons.chevron_left),
+              label: const Text('Previous'),
             ),
-          ),
-          TextButton.icon(
-            onPressed: onNext,
-            icon: const Icon(Icons.chevron_right),
-            label: const Text('Next'),
-            iconAlignment: IconAlignment.end,
-          ),
-        ],
+            Expanded(
+              child: Text(
+                'Page $currentPage of $pageCount',
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: onNext,
+              icon: const Icon(Icons.chevron_right),
+              label: const Text('Next'),
+              iconAlignment: IconAlignment.end,
+            ),
+          ],
+        ),
       ),
     );
   }
