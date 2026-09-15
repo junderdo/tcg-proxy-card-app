@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tcg_proxy_card_app/bluetooth/ble_devices_controller.dart';
 import 'package:tcg_proxy_card_app/bluetooth/ble_service.dart';
+import 'package:tcg_proxy_card_app/upload/upload_protocol.dart';
 
 import '../support/fake_ble_service.dart';
 
@@ -65,6 +66,29 @@ void main() {
   });
 
   group('scanning', () {
+    test('asks the platform for TCG Proxy Cards only', () async {
+      await createReady();
+      await controller.startScan();
+
+      expect(service.scanNames, [UploadProtocol.advertisedName]);
+    });
+
+    test('keeps only devices named exactly TCG Proxy Card', () async {
+      await createReady();
+      await controller.startScan();
+
+      service.emitDevices([
+        bleDevice('card'),
+        bleDevice('other', name: 'Heart Monitor'),
+        bleDevice('unnamed', name: ''),
+        bleDevice('lowercase', name: 'tcg proxy card'),
+        bleDevice('padded', name: ' TCG Proxy Card'),
+      ]);
+      await pumpEventQueue();
+
+      expect(controller.devices.map((d) => d.id), ['card']);
+    });
+
     test('de-duplicates devices by ID and sorts strongest first', () async {
       await createReady();
       await controller.startScan();
@@ -192,7 +216,7 @@ void main() {
       await pumpEventQueue();
 
       expect(controller.connectionOf('a'), DeviceConnection.disconnected);
-      expect(failures, ['Could not connect to Unknown device: timeout']);
+      expect(failures, ['Could not connect to a: timeout']);
     });
 
     test('disconnects a connected device', () async {

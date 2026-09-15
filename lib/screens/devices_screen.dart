@@ -59,7 +59,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Disconnect from ${device.displayName}?'),
+        title: Text('Disconnect from ${device.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -98,7 +98,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
       ),
       BluetoothStatus.off => const CenteredMessage(
         icon: Icons.bluetooth_disabled,
-        text: 'Bluetooth is off. Turn it on to scan for devices.',
+        text: 'Bluetooth is off. Turn it on to scan for TCG Proxy Cards.',
       ),
       BluetoothStatus.ready => _buildScanner(context),
     };
@@ -119,7 +119,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
               : FilledButton.icon(
                   onPressed: _devices.startScan,
                   icon: const Icon(Icons.bluetooth_searching),
-                  label: const Text('Scan for devices'),
+                  label: const Text('Scan for TCG Proxy Cards'),
                 ),
         ),
         SizedBox(
@@ -145,17 +145,19 @@ class _DevicesScreenState extends State<DevicesScreen> {
       if (_devices.isScanning) {
         return const CenteredMessage(
           icon: Icons.bluetooth_searching,
-          text: 'Looking for nearby devices…',
+          text: 'Looking for nearby TCG Proxy Cards…',
         );
       }
       return _devices.hasScanned
           ? const CenteredMessage(
               icon: Icons.bluetooth,
-              text: 'No devices found',
+              text:
+                  'No TCG Proxy Cards found. Make sure the card is powered on '
+                  'and nearby.',
             )
           : const CenteredMessage(
               icon: Icons.bluetooth,
-              text: 'Scan to find nearby Bluetooth devices',
+              text: 'Scan to find nearby TCG Proxy Cards',
             );
     }
     return ListView.builder(

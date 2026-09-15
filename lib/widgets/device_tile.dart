@@ -21,7 +21,7 @@ class DeviceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: SignalBars(level: SignalLevel.fromRssi(device.rssi)),
-      title: Text(device.displayName, overflow: TextOverflow.ellipsis),
+      title: Text(device.name, overflow: TextOverflow.ellipsis),
       subtitle: Text(device.id, overflow: TextOverflow.ellipsis),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
