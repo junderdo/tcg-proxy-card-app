@@ -28,6 +28,11 @@ class CardDetailScreen extends StatelessWidget {
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: () {},
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  textStyle: const TextStyle(fontSize: 20),
+                  iconSize: 28,
+                ),
                 icon: const Icon(Icons.upload),
                 label: const Text('Upload'),
               ),

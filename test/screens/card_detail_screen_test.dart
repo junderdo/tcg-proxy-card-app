@@ -32,4 +32,28 @@ void main() {
 
     expect(find.byType(CardDetailScreen), findsOneWidget);
   });
+
+  testWidgets('Upload is a large full-width button that fits a small phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(MaterialApp(home: CardDetailScreen(card: card)));
+
+    expect(tester.takeException(), isNull);
+    final upload = tester.getRect(find.widgetWithText(FilledButton, 'Upload'));
+    expect(upload.height, greaterThanOrEqualTo(56));
+    expect(upload.width, 320 - 2 * 16);
+    expect(upload.bottom, lessThanOrEqualTo(568));
+    expect(find.byIcon(Icons.upload), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text('Upload')).style?.fontSize ??
+          DefaultTextStyle.of(tester.element(find.text('Upload')))
+              .style
+              .fontSize,
+      20,
+    );
+  });
 }
