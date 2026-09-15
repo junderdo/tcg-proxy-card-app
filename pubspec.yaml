@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   flutter_blue_plus: 2.3.12
+  image: ^4.10.1
+  archive: ^4.3.0
 
 dev_dependencies:
   flutter_test:
