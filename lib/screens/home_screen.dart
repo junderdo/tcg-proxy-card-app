@@ -6,6 +6,7 @@ import '../scryfall/models.dart';
 import '../scryfall/scryfall_client.dart';
 import '../search/card_search_controller.dart';
 import '../widgets/card_grid.dart';
+import '../widgets/centered_message.dart';
 import '../widgets/pagination_bar.dart';
 import 'card_detail_screen.dart';
 
@@ -134,15 +135,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_search.errorMessage case final message?) {
-      return _CenteredMessage(icon: Icons.error_outline, text: message);
+      return CenteredMessage(icon: Icons.error_outline, text: message);
     }
     if (_search.cards.isEmpty) {
       return _search.hasSearched
-          ? const _CenteredMessage(
+          ? const CenteredMessage(
               icon: Icons.search_off,
               text: 'No cards found',
             )
-          : const _CenteredMessage(
+          : const CenteredMessage(
               icon: Icons.style,
               text: 'Search for cards to get started',
             );
@@ -175,30 +176,6 @@ class _ZoomButton extends StatelessWidget {
       iconSize: 30,
       constraints: const BoxConstraints.tightFor(width: 52, height: 52),
       onPressed: onPressed,
-    );
-  }
-}
-
-class _CenteredMessage extends StatelessWidget {
-  const _CenteredMessage({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 48),
-            const SizedBox(height: 12),
-            Text(text, textAlign: TextAlign.center),
-          ],
-        ),
-      ),
     );
   }
 }
