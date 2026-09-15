@@ -8,25 +8,19 @@ import '../widgets/centered_message.dart';
 import '../widgets/device_tile.dart';
 
 class DevicesScreen extends StatefulWidget {
-  const DevicesScreen({
-    super.key,
-    required this.bluetooth,
-    this.scanTimeout = const Duration(seconds: 15),
-  });
+  const DevicesScreen({super.key, required this.devices});
 
-  final BleService bluetooth;
-  final Duration scanTimeout;
+  /// Owned by the caller, so connections outlive this screen.
+  final BleDevicesController devices;
 
   @override
   State<DevicesScreen> createState() => _DevicesScreenState();
 }
 
 class _DevicesScreenState extends State<DevicesScreen> {
-  late final _devices = BleDevicesController(
-    widget.bluetooth,
-    scanTimeout: widget.scanTimeout,
-  );
   late final StreamSubscription<String> _failureSubscription;
+
+  BleDevicesController get _devices => widget.devices;
 
   @override
   void initState() {
@@ -38,7 +32,6 @@ class _DevicesScreenState extends State<DevicesScreen> {
   @override
   void dispose() {
     _failureSubscription.cancel();
-    _devices.dispose();
     super.dispose();
   }
 

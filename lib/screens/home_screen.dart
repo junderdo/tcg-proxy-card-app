@@ -8,16 +8,17 @@ import '../search/card_search_controller.dart';
 import '../widgets/card_grid.dart';
 import '../widgets/centered_message.dart';
 import '../widgets/pagination_bar.dart';
-import 'card_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.client,
+    required this.buildCardDetail,
     this.searchDebounce = const Duration(milliseconds: 500),
   });
 
   final ScryfallClient client;
+  final Widget Function(ScryfallCard card) buildCardDetail;
   final Duration searchDebounce;
 
   @override
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openCard(ScryfallCard card) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => CardDetailScreen(card: card)),
+      MaterialPageRoute<void>(builder: (_) => widget.buildCardDetail(card)),
     );
   }
 

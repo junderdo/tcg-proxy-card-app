@@ -24,6 +24,7 @@ class BleDevicesController extends ChangeNotifier {
   final _connectionFailures = StreamController<String>.broadcast();
   final List<StreamSubscription<Object>> _subscriptions = [];
   StreamSubscription<List<BleDevice>>? _scanSubscription;
+  Future<void>? _initializing;
   Timer? _scanTimer;
   bool _disposed = false;
 
@@ -43,10 +44,19 @@ class BleDevicesController extends ChangeNotifier {
       return bySignal != 0 ? bySignal : a.id.compareTo(b.id);
     });
 
+  List<BleDevice> get connectedDevices => [
+    for (final device in devices)
+      if (connectionOf(device.id) == DeviceConnection.connected) device,
+  ];
+
   DeviceConnection connectionOf(String deviceId) =>
       _connections[deviceId] ?? DeviceConnection.disconnected;
 
-  Future<void> initialize() async {
+  /// Starts using Bluetooth. Safe to call repeatedly; only the first call
+  /// does anything.
+  Future<void> initialize() => _initializing ??= _initialize();
+
+  Future<void> _initialize() async {
     final bool supported;
     try {
       supported = await _service.isSupported;

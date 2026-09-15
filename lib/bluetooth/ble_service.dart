@@ -10,6 +10,13 @@ class BleDevice {
   String get displayName => name.trim().isEmpty ? unknownName : name;
 }
 
+class BleCharacteristic {
+  const BleCharacteristic({required this.serviceUuid, required this.uuid});
+
+  final String serviceUuid;
+  final String uuid;
+}
+
 enum BleAdapterState { unknown, unsupported, unauthorized, off, on }
 
 class BleException implements Exception {
@@ -42,4 +49,29 @@ abstract interface class BleService {
   Future<void> stopScan();
   Future<void> connect(String deviceId);
   Future<void> disconnect(String deviceId);
+
+  /// The lowercase UUIDs of the primary services a connected device offers.
+  Future<Set<String>> discoverServices(String deviceId);
+
+  /// The negotiated ATT MTU of a connected device.
+  Future<int> mtu(String deviceId);
+
+  /// Emits each value the device notifies while notifications are enabled.
+  Stream<List<int>> notifications(
+    String deviceId,
+    BleCharacteristic characteristic,
+  );
+
+  Future<void> setNotifications(
+    String deviceId,
+    BleCharacteristic characteristic, {
+    required bool enabled,
+  });
+
+  Future<void> write(
+    String deviceId,
+    BleCharacteristic characteristic,
+    List<int> value, {
+    bool withoutResponse = false,
+  });
 }
