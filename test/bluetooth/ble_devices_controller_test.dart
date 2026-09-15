@@ -40,6 +40,18 @@ void main() {
       expect(controller.status, BluetoothStatus.unauthorized);
     });
 
+    test('does nothing with Bluetooth until initialized', () async {
+      var checks = 0;
+      service = _CountingBleService(onIsSupported: () => checks++);
+      controller = BleDevicesController(service);
+      expect(checks, 0);
+
+      await Future.wait([controller.initialize(), controller.initialize()]);
+      await controller.initialize();
+
+      expect(checks, 1);
+    });
+
     test('turning Bluetooth off ends a scan in progress', () async {
       await createReady();
       await controller.startScan();
@@ -203,6 +215,16 @@ void main() {
       expect(controller.connectionOf('a'), DeviceConnection.disconnected);
     });
 
+    test('lists connected devices', () async {
+      await createReady();
+      await controller.startScan();
+      service.emitDevices([bleDevice('a'), bleDevice('b'), bleDevice('c')]);
+      await pumpEventQueue();
+      await controller.connect('b');
+
+      expect(controller.connectedDevices.map((d) => d.id), ['b']);
+    });
+
     test('dispose stops scanning and disconnects every device', () async {
       await createReady();
       await controller.connect('a');
@@ -215,4 +237,16 @@ void main() {
       expect(service.disconnectCalls, unorderedEquals(['a', 'b']));
     });
   });
+}
+
+class _CountingBleService extends FakeBleService {
+  _CountingBleService({required this.onIsSupported});
+
+  final void Function() onIsSupported;
+
+  @override
+  Future<bool> get isSupported {
+    onIsSupported();
+    return super.isSupported;
+  }
 }

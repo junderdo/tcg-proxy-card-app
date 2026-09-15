@@ -76,7 +76,19 @@ void main() {
     );
   });
 
-  testWidgets('leaving the Devices tab disconnects', (tester) async {
+  testWidgets("doesn't touch Bluetooth until the Devices tab opens", (
+    tester,
+  ) async {
+    var checks = 0;
+    bluetooth = _CountingBleService(() => checks++);
+    await pumpShell(tester);
+    expect(checks, 0);
+
+    await selectTab(tester, 'Devices');
+    expect(checks, 1);
+  });
+
+  testWidgets('the connection survives a tab switch', (tester) async {
     await pumpShell(tester);
     await selectTab(tester, 'Devices');
     await tester.tap(find.text('Scan for devices'));
@@ -87,7 +99,22 @@ void main() {
     await tester.pump();
 
     await selectTab(tester, 'Cards');
+    expect(bluetooth.disconnectCalls, isEmpty);
+    expect(bluetooth.stopScanCalls, 1);
 
-    expect(bluetooth.disconnectCalls, ['AA:01']);
+    await selectTab(tester, 'Devices');
+    expect(find.byIcon(Icons.bluetooth_connected), findsWidgets);
   });
+}
+
+class _CountingBleService extends FakeBleService {
+  _CountingBleService(this.onIsSupported);
+
+  final void Function() onIsSupported;
+
+  @override
+  Future<bool> get isSupported {
+    onIsSupported();
+    return super.isSupported;
+  }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tcg_proxy_card_app/bluetooth/ble_devices_controller.dart';
 import 'package:tcg_proxy_card_app/bluetooth/ble_service.dart';
 import 'package:tcg_proxy_card_app/bluetooth/signal_strength.dart';
 import 'package:tcg_proxy_card_app/screens/devices_screen.dart';
@@ -15,11 +16,23 @@ void main() {
 
   setUp(() => bluetooth = FakeBleService());
 
-  Future<void> pumpDevices(WidgetTester tester) async {
+  Future<BleDevicesController> pumpDevices(
+    WidgetTester tester, {
+    Duration scanTimeout = const Duration(seconds: 15),
+  }) async {
     await tester.pumpWidget(
-      MaterialApp(home: DevicesScreen(bluetooth: bluetooth)),
+      MaterialApp(
+        home: _ControllerHost(
+          create: () =>
+              BleDevicesController(bluetooth, scanTimeout: scanTimeout),
+          builder: (devices) => DevicesScreen(devices: devices),
+        ),
+      ),
     );
     await tester.pump();
+    return tester
+        .state<_ControllerHostState>(find.byType(_ControllerHost))
+        .devices;
   }
 
   Future<void> scanAndFind(WidgetTester tester, List<BleDevice> devices) async {
@@ -57,15 +70,7 @@ void main() {
   });
 
   testWidgets('scan ends after the timeout', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: DevicesScreen(
-          bluetooth: bluetooth,
-          scanTimeout: const Duration(seconds: 12),
-        ),
-      ),
-    );
-    await tester.pump();
+    await pumpDevices(tester, scanTimeout: const Duration(seconds: 12));
 
     await tester.tap(find.text('Scan for devices'));
     await tester.pump(const Duration(seconds: 12));
@@ -190,18 +195,20 @@ void main() {
     );
   });
 
-  testWidgets('leaving the screen stops scanning and disconnects', (
-    tester,
-  ) async {
-    await pumpDevices(tester);
+  testWidgets('leaving the screen keeps devices connected', (tester) async {
+    final devices = BleDevicesController(bluetooth);
+    addTearDown(devices.dispose);
+    await tester.pumpWidget(MaterialApp(home: DevicesScreen(devices: devices)));
+    await tester.pump();
     await scanAndFind(tester, [bleDevice('AA:01')]);
     await tester.tap(tileFor('AA:01'));
     await tester.pump();
+    await devices.stopScan();
 
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
 
-    expect(bluetooth.stopScanCalls, 1);
-    expect(bluetooth.disconnectCalls, ['AA:01']);
+    expect(bluetooth.disconnectCalls, isEmpty);
+    expect(devices.connectionOf('AA:01'), DeviceConnection.connected);
   });
 
   testWidgets('shows a scan error', (tester) async {
@@ -254,4 +261,29 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(tester.getRect(find.text('-100 dBm')).right, lessThanOrEqualTo(360));
   });
+}
+
+/// Owns a controller for the life of the test's widget tree, as the app shell
+/// does in the app.
+class _ControllerHost extends StatefulWidget {
+  const _ControllerHost({required this.create, required this.builder});
+
+  final BleDevicesController Function() create;
+  final Widget Function(BleDevicesController devices) builder;
+
+  @override
+  State<_ControllerHost> createState() => _ControllerHostState();
+}
+
+class _ControllerHostState extends State<_ControllerHost> {
+  late final devices = widget.create();
+
+  @override
+  void dispose() {
+    devices.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(devices);
 }
