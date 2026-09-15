@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tcg_proxy_card_app/screens/card_detail_screen.dart';
 import 'package:tcg_proxy_card_app/screens/home_screen.dart';
+import 'package:tcg_proxy_card_app/scryfall/models.dart';
 import 'package:tcg_proxy_card_app/widgets/card_grid.dart';
 import 'package:tcg_proxy_card_app/widgets/card_image.dart';
 import 'package:tcg_proxy_card_app/widgets/pagination_bar.dart';
 
 import '../support/fake_scryfall.dart';
+
+Widget cardDetailStub(ScryfallCard card) =>
+    Scaffold(body: Text('Detail for ${card.name}'));
 
 void main() {
   late FakeScryfall scryfall;
@@ -18,6 +21,7 @@ void main() {
       MaterialApp(
         home: HomeScreen(
           client: scryfall.client(),
+          buildCardDetail: cardDetailStub,
           searchDebounce: Duration.zero,
         ),
       ),
@@ -48,7 +52,12 @@ void main() {
 
   testWidgets('debounces typing into a single search', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: HomeScreen(client: scryfall.client())),
+      MaterialApp(
+        home: HomeScreen(
+          client: scryfall.client(),
+          buildCardDetail: cardDetailStub,
+        ),
+      ),
     );
 
     await tester.enterText(find.byType(SearchBar), 'gob');
@@ -131,8 +140,7 @@ void main() {
     await tester.tap(find.byType(CardImage).first);
     await tester.pumpAndSettle();
 
-    expect(find.byType(CardDetailScreen), findsOneWidget);
-    expect(find.text('Upload'), findsOneWidget);
+    expect(find.text('Detail for Card p1-0'), findsOneWidget);
   });
 
   testWidgets('shows an empty state for no results and hides pagination', (
