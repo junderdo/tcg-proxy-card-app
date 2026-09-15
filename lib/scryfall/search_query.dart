@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'models.dart';
 
 /// Scryfall rejects longer queries (observed as a bogus "unclosed parentheses"
@@ -71,28 +73,30 @@ bool _nameHasWordStartingWith(String name, String prefix) {
       .any((word) => word.startsWith(prefix));
 }
 
-/// Builds a query matching cards whose name, color, or set matches any term.
+/// Builds a query matching cards that satisfy every term, where a term
+/// matches a card's name, its set, or its color when the term is a color word.
 ///
 /// `set:` only matches set codes and exact set names, so sets whose names
-/// contain a word starting with the term are added as `e:<code>` clauses,
-/// trimmed to stay under [maxQueryLength].
+/// contain a word starting with the term are added as `e:<code>` clauses.
+/// When those don't all fit in [maxQueryLength], the budget is shared so terms
+/// with few set matches keep all of theirs, and the rest keep their first
+/// codes in [sets] order.
 String buildSearchQuery(String input, {Iterable<ScryfallSet> sets = const []}) {
   final terms = splitSearchTerms(input);
   if (terms.isEmpty) return '';
 
   final baseClauses = [for (final term in terms) _baseClauses(term)];
-  final baseLength = _join(baseClauses).length;
-  final budgetPerTerm = (maxQueryLength - baseLength) ~/ terms.length;
+  final setClauses = [
+    for (final term in terms)
+      [for (final code in setCodesMatchingName(term, sets)) 'e:$code'],
+  ];
+  final budgets = _shareBudget(maxQueryLength - _join(baseClauses).length, [
+    for (final clauses in setClauses) _orLength(clauses),
+  ]);
 
   final groups = [
     for (var i = 0; i < terms.length; i++)
-      [
-        ...baseClauses[i],
-        ..._fitWithinBudget(
-          setCodesMatchingName(terms[i], sets).map((code) => 'e:$code'),
-          budgetPerTerm,
-        ),
-      ],
+      [...baseClauses[i], ..._fitWithinBudget(setClauses[i], budgets[i])],
   ];
   return _join(groups);
 }
@@ -103,7 +107,25 @@ List<String> _baseClauses(String term) => [
   if (isColorTerm(term)) 'color:${term.toLowerCase()}',
 ];
 
-Iterable<String> _fitWithinBudget(Iterable<String> clauses, int budget) sync* {
+int _orLength(List<String> clauses) =>
+    clauses.fold(0, (length, clause) => length + ' or '.length + clause.length);
+
+/// Splits [budget] evenly, handing whatever a term doesn't need to the rest.
+List<int> _shareBudget(int budget, List<int> needs) {
+  final budgets = List.filled(needs.length, 0);
+  final smallestFirst = List.generate(needs.length, (i) => i)
+    ..sort((a, b) => needs[a].compareTo(needs[b]));
+  var remaining = budget;
+  for (var n = 0; n < smallestFirst.length; n++) {
+    final i = smallestFirst[n];
+    final fairShare = remaining ~/ (smallestFirst.length - n);
+    budgets[i] = min(needs[i], fairShare);
+    remaining -= budgets[i];
+  }
+  return budgets;
+}
+
+Iterable<String> _fitWithinBudget(List<String> clauses, int budget) sync* {
   var used = 0;
   for (final clause in clauses) {
     used += ' or '.length + clause.length;
@@ -113,4 +135,4 @@ Iterable<String> _fitWithinBudget(Iterable<String> clauses, int budget) sync* {
 }
 
 String _join(List<List<String>> groups) =>
-    groups.map((clauses) => '(${clauses.join(' or ')})').join(' or ');
+    groups.map((clauses) => '(${clauses.join(' or ')})').join(' and ');

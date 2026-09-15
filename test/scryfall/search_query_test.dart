@@ -22,10 +22,10 @@ void main() {
       expect(buildSearchQuery(' '), '');
     });
 
-    test('ORs name, set, and color clauses across terms', () {
+    test('requires every term, each matching name, set, or color', () {
       expect(
         buildSearchQuery('bolt red'),
-        '(name:"bolt" or set:"bolt") or '
+        '(name:"bolt" or set:"bolt") and '
         '(name:"red" or set:"red" or color:red)',
       );
     });
@@ -71,6 +71,25 @@ void main() {
       expect(query.length, lessThanOrEqualTo(maxQueryLength));
       expect(query, contains('e:s0'));
       expect(query, startsWith('(name:"the" or set:"the" or e:s0'));
+      expect(query, contains(') and (name:"set" or set:"set" or e:s0'));
+    });
+
+    test('keeps every set code for terms that match few sets', () {
+      final sets = [
+        const ScryfallSet(code: 'dmu', name: 'Dominaria United'),
+        for (var i = 0; i < 500; i++)
+          ScryfallSet(code: 's$i', name: 'Promo Set $i'),
+      ];
+
+      final query = buildSearchQuery('promo united', sets: sets);
+
+      expect(query.length, lessThanOrEqualTo(maxQueryLength));
+      expect(query, endsWith('and (name:"united" or set:"united" or e:dmu)'));
+      expect(
+        maxQueryLength - query.length,
+        lessThan(' or e:s999'.length),
+        reason: 'the trimmed term should use the budget the other left over',
+      );
     });
   });
 }
