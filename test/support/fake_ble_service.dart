@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:tcg_proxy_card_app/bluetooth/ble_service.dart';
+import 'package:tcg_proxy_card_app/upload/upload_protocol.dart';
 
 /// Scriptable [BleService] that records calls and lets tests push events.
 class FakeBleService implements BleService {
@@ -35,6 +36,7 @@ class FakeBleService implements BleService {
   final List<bool> notificationToggles = [];
 
   int startScanCalls = 0;
+  List<String>? scanNames;
   int stopScanCalls = 0;
   final List<String> connectCalls = [];
   final List<String> disconnectCalls = [];
@@ -78,8 +80,9 @@ class FakeBleService implements BleService {
   Stream<String> get disconnections => _disconnections.stream;
 
   @override
-  Future<void> startScan() async {
+  Future<void> startScan({required List<String> names}) async {
     startScanCalls++;
+    scanNames = names;
     if (startScanError case final error?) throw error;
   }
 
@@ -157,5 +160,8 @@ class FakeWrite {
   final bool withoutResponse;
 }
 
-BleDevice bleDevice(String id, {String name = '', int rssi = -60}) =>
-    BleDevice(id: id, name: name, rssi: rssi);
+BleDevice bleDevice(
+  String id, {
+  String name = UploadProtocol.advertisedName,
+  int rssi = -60,
+}) => BleDevice(id: id, name: name, rssi: rssi);

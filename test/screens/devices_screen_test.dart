@@ -36,7 +36,7 @@ void main() {
   }
 
   Future<void> scanAndFind(WidgetTester tester, List<BleDevice> devices) async {
-    await tester.tap(find.text('Scan for devices'));
+    await tester.tap(find.text('Scan for TCG Proxy Cards'));
     await tester.pump();
     bluetooth.emitDevices(devices);
     await tester.pump();
@@ -57,7 +57,7 @@ void main() {
   testWidgets('scan button starts and stops a scan', (tester) async {
     await pumpDevices(tester);
 
-    await tester.tap(find.text('Scan for devices'));
+    await tester.tap(find.text('Scan for TCG Proxy Cards'));
     await tester.pump();
     expect(bluetooth.startScanCalls, 1);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
@@ -66,27 +66,40 @@ void main() {
     await tester.pump();
     expect(bluetooth.stopScanCalls, 1);
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('Scan for devices'), findsOneWidget);
+    expect(find.text('Scan for TCG Proxy Cards'), findsOneWidget);
   });
 
   testWidgets('scan ends after the timeout', (tester) async {
     await pumpDevices(tester, scanTimeout: const Duration(seconds: 12));
 
-    await tester.tap(find.text('Scan for devices'));
+    await tester.tap(find.text('Scan for TCG Proxy Cards'));
     await tester.pump(const Duration(seconds: 12));
 
-    expect(find.text('Scan for devices'), findsOneWidget);
-    expect(find.text('No devices found'), findsOneWidget);
+    expect(find.text('Scan for TCG Proxy Cards'), findsOneWidget);
+    expect(find.textContaining('No TCG Proxy Cards found'), findsOneWidget);
   });
 
-  testWidgets('rows show name or fallback, ID, RSSI and signal bars', (
+  testWidgets('lists only TCG Proxy Cards among nearby devices', (
     tester,
   ) async {
     await pumpDevices(tester);
     await scanAndFind(tester, [
-      bleDevice('AA:01', name: 'Heart Monitor', rssi: -85),
+      bleDevice('AA:01', name: 'Heart Monitor', rssi: -40),
+      bleDevice('AA:02', rssi: -70),
+      bleDevice('AA:03', name: '', rssi: -50),
+    ]);
+
+    expect(find.byType(DeviceTile), findsOneWidget);
+    expect(tileFor('AA:02'), findsOneWidget);
+    expect(find.text('Heart Monitor'), findsNothing);
+  });
+
+  testWidgets('rows show name, ID, RSSI and signal bars', (tester) async {
+    await pumpDevices(tester);
+    await scanAndFind(tester, [
+      bleDevice('AA:01', rssi: -85),
       bleDevice('AA:02', rssi: -72),
-      bleDevice('AA:03', name: 'Speaker', rssi: -50),
+      bleDevice('AA:03', rssi: -50),
     ]);
 
     expect(
@@ -98,7 +111,7 @@ void main() {
 
     final weak = tileFor('AA:01');
     expect(
-      find.descendant(of: weak, matching: find.text('Heart Monitor')),
+      find.descendant(of: weak, matching: find.text('TCG Proxy Card')),
       findsOneWidget,
     );
     expect(
@@ -107,13 +120,6 @@ void main() {
     );
     expect(
       find.descendant(of: weak, matching: find.text('-85 dBm')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: tileFor('AA:02'),
-        matching: find.text('Unknown device'),
-      ),
       findsOneWidget,
     );
 
@@ -145,7 +151,7 @@ void main() {
   ) async {
     bluetooth.pendingConnect = Completer<void>();
     await pumpDevices(tester);
-    await scanAndFind(tester, [bleDevice('AA:01', name: 'Speaker')]);
+    await scanAndFind(tester, [bleDevice('AA:01')]);
 
     await tester.tap(tileFor('AA:01'));
     await tester.pump();
@@ -166,13 +172,13 @@ void main() {
 
   testWidgets('tapping a connected row offers to disconnect', (tester) async {
     await pumpDevices(tester);
-    await scanAndFind(tester, [bleDevice('AA:01', name: 'Speaker')]);
+    await scanAndFind(tester, [bleDevice('AA:01')]);
     await tester.tap(tileFor('AA:01'));
     await tester.pump();
 
     await tester.tap(tileFor('AA:01'));
     await tester.pumpAndSettle();
-    expect(find.text('Disconnect from Speaker?'), findsOneWidget);
+    expect(find.text('Disconnect from TCG Proxy Card?'), findsOneWidget);
 
     await tester.tap(find.text('Disconnect'));
     await tester.pumpAndSettle();
@@ -183,14 +189,14 @@ void main() {
   testWidgets('a failed connection shows a snack bar', (tester) async {
     bluetooth.connectError = const BleException('timed out');
     await pumpDevices(tester);
-    await scanAndFind(tester, [bleDevice('AA:01', name: 'Speaker')]);
+    await scanAndFind(tester, [bleDevice('AA:01')]);
 
     await tester.tap(tileFor('AA:01'));
     await tester.pump();
     await tester.pump();
 
     expect(
-      find.text('Could not connect to Speaker: timed out'),
+      find.text('Could not connect to TCG Proxy Card: timed out'),
       findsOneWidget,
     );
   });
@@ -215,7 +221,7 @@ void main() {
     bluetooth.startScanError = const BlePermissionDeniedException('denied');
     await pumpDevices(tester);
 
-    await tester.tap(find.text('Scan for devices'));
+    await tester.tap(find.text('Scan for TCG Proxy Cards'));
     await tester.pump();
 
     expect(find.textContaining('Bluetooth permission denied'), findsOneWidget);
@@ -226,11 +232,11 @@ void main() {
     await pumpDevices(tester);
 
     expect(find.textContaining('Bluetooth is off'), findsOneWidget);
-    expect(find.text('Scan for devices'), findsNothing);
+    expect(find.text('Scan for TCG Proxy Cards'), findsNothing);
 
     bluetooth.setAdapterState(BleAdapterState.on);
     await tester.pump();
-    expect(find.text('Scan for devices'), findsOneWidget);
+    expect(find.text('Scan for TCG Proxy Cards'), findsOneWidget);
   });
 
   testWidgets('explains when scanning is unsupported', (tester) async {
@@ -238,7 +244,7 @@ void main() {
     await pumpDevices(tester);
 
     expect(find.textContaining("isn't supported"), findsOneWidget);
-    expect(find.text('Scan for devices'), findsNothing);
+    expect(find.text('Scan for TCG Proxy Cards'), findsNothing);
   });
 
   testWidgets('fits a 360px wide phone without overflow', (tester) async {
@@ -249,11 +255,7 @@ void main() {
 
     await pumpDevices(tester);
     await scanAndFind(tester, [
-      bleDevice(
-        '00:11:22:33:44:55:66:77:88:99',
-        name: 'A device with a remarkably long advertised name',
-        rssi: -100,
-      ),
+      bleDevice('00:11:22:33:44:55:66:77:88:99', rssi: -100),
     ]);
     await tester.tap(find.byType(DeviceTile));
     await tester.pump();

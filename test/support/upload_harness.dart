@@ -72,14 +72,11 @@ class UploadHarness {
   );
 
   /// Scans for and connects to a device through the real controller.
-  Future<void> connect(
-    String deviceId, {
-    String name = 'TCG Proxy Card',
-  }) async {
+  Future<void> connect(String deviceId) async {
     await devices.initialize();
     await _flushMicrotasks();
     await devices.startScan();
-    bluetooth.emitDevices([bleDevice(deviceId, name: name)]);
+    bluetooth.emitDevices([bleDevice(deviceId)]);
     await _flushMicrotasks();
     await devices.stopScan();
     await devices.connect(deviceId);

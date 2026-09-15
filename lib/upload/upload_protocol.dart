@@ -5,6 +5,8 @@ import 'panel_frame.dart';
 /// Wire format of the card's BLE image upload protocol
 /// (`docs/ble-image-upload.md` in the firmware repo).
 abstract final class UploadProtocol {
+  static const advertisedName = 'TCG Proxy Card';
+
   static const serviceUuid = '7f0eca18-f2cb-47d8-a350-d535917badd7';
   static const controlUuid = 'f22a619d-bd0e-4974-ba6f-30fda3bcf5c8';
   static const dataUuid = '46639c60-7777-461a-b888-68f51edd3f5d';

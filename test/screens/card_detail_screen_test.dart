@@ -124,18 +124,20 @@ void main() {
       expect(harness.downloads, isEmpty);
     });
 
-    testWidgets('explains when the connected device is not a card', (
+    testWidgets('explains when the connected card lacks the upload service', (
       tester,
     ) async {
       harness.bluetooth.services = {'0000180d-0000-1000-8000-00805f9b34fb'};
-      await harness.connect(deviceId, name: 'Heart Monitor');
+      await harness.connect(deviceId);
       await pumpDetail(tester);
 
       await tapUpload(tester);
 
       expect(find.text("Can't upload to this device"), findsOneWidget);
       expect(
-        find.textContaining("Heart Monitor isn't a TCG Proxy Card"),
+        find.textContaining(
+          "TCG Proxy Card doesn't offer the image upload service",
+        ),
         findsOneWidget,
       );
       expect(find.text('Go to Devices'), findsOneWidget);
@@ -318,7 +320,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     proxyCard.startReplies.add(error(DeviceErrorCode.crcMismatch, 0xDEADBEEF));
-    await harness.connect(deviceId, name: 'TCG Proxy Card');
+    await harness.connect(deviceId);
     await pumpDetail(tester);
 
     await tapUpload(tester);

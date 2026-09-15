@@ -62,7 +62,7 @@ class _UploadDialogState extends State<UploadDialog> {
 
   String get _title => switch (_upload.stage) {
     UploadStage.preparing => 'Preparing image',
-    UploadStage.confirming => 'Send to ${_upload.device.displayName}?',
+    UploadStage.confirming => 'Send to ${_upload.device.name}?',
     UploadStage.transferring => 'Uploading',
     UploadStage.refreshing => 'Refreshing display',
     UploadStage.displayed => 'Uploaded',

@@ -101,12 +101,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         await _offerDevicesTab(
           title: "Can't upload to this device",
           message:
-              "${device.displayName} isn't a TCG Proxy Card; it doesn't offer "
-              'the image upload service. Connect to a card on the Devices tab.',
+              "${device.name} doesn't offer the image upload service. "
+              'Connect to a different card on the Devices tab.',
         );
       case DeviceCheckFailed(:final device, :final error):
         await _offerDevicesTab(
-          title: "Couldn't check ${device.displayName}",
+          title: "Couldn't check ${device.name}",
           message: error.message,
         );
       case DeviceCoolingDown(:final device):

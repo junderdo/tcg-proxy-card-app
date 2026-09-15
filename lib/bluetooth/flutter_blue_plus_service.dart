@@ -30,7 +30,8 @@ class FlutterBluePlusService implements BleService {
       .map((e) => e.device.remoteId.str);
 
   @override
-  Future<void> startScan() => _guard(FlutterBluePlus.startScan);
+  Future<void> startScan({required List<String> names}) =>
+      _guard(() => FlutterBluePlus.startScan(withNames: names));
 
   @override
   Future<void> stopScan() => _guard(FlutterBluePlus.stopScan);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../upload/upload_protocol.dart';
 import 'ble_service.dart';
 
 enum BluetoothStatus { checking, unsupported, unauthorized, off, ready }
@@ -88,7 +89,7 @@ class BleDevicesController extends ChangeNotifier {
     );
     _scanTimer = Timer(scanTimeout, stopScan);
     try {
-      await _service.startScan();
+      await _service.startScan(names: const [UploadProtocol.advertisedName]);
     } on Exception catch (e) {
       _failScan(e);
     }
@@ -172,7 +173,8 @@ class BleDevicesController extends ChangeNotifier {
 
   void _addScanResults(List<BleDevice> results) {
     if (!isScanning) return;
-    for (final device in results) {
+    // Platform name filters differ, so match exactly here as well.
+    for (final device in results.where(_isProxyCard)) {
       _devices[device.id] = device;
     }
     notifyListeners();
@@ -195,11 +197,13 @@ class BleDevicesController extends ChangeNotifier {
     _scanSubscription = null;
   }
 
+  static bool _isProxyCard(BleDevice device) =>
+      device.name == UploadProtocol.advertisedName;
+
   bool _isInUse(String deviceId) =>
       connectionOf(deviceId) != DeviceConnection.disconnected;
 
-  String _nameOf(String deviceId) =>
-      _devices[deviceId]?.displayName ?? BleDevice.unknownName;
+  String _nameOf(String deviceId) => _devices[deviceId]?.name ?? deviceId;
 
   static String _describe(Object error) =>
       error is BleException ? error.message : '$error';

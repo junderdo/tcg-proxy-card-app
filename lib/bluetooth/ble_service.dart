@@ -4,10 +4,6 @@ class BleDevice {
   final String id;
   final String name;
   final int rssi;
-
-  static const unknownName = 'Unknown device';
-
-  String get displayName => name.trim().isEmpty ? unknownName : name;
 }
 
 class BleCharacteristic {
@@ -45,7 +41,8 @@ abstract interface class BleService {
   /// Emits the ID of each device that becomes disconnected.
   Stream<String> get disconnections;
 
-  Future<void> startScan();
+  /// Scans for devices whose advertised name exactly matches one of [names].
+  Future<void> startScan({required List<String> names});
   Future<void> stopScan();
   Future<void> connect(String deviceId);
   Future<void> disconnect(String deviceId);

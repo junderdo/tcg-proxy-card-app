@@ -55,7 +55,7 @@ void main() {
     expect(find.byType(DevicesScreen), findsNothing);
 
     await selectTab(tester, 'Devices');
-    expect(find.text('Scan for devices'), findsOneWidget);
+    expect(find.text('Scan for TCG Proxy Cards'), findsOneWidget);
     expect(find.text('Card Search'), findsNothing);
 
     await selectTab(tester, 'Cards');
@@ -114,9 +114,9 @@ void main() {
     final proxyCard = FakeProxyCard(bluetooth);
     await pumpShell(tester);
     await selectTab(tester, 'Devices');
-    await tester.tap(find.text('Scan for devices'));
+    await tester.tap(find.text('Scan for TCG Proxy Cards'));
     await tester.pump();
-    bluetooth.emitDevices([bleDevice('AA:01', name: 'TCG Proxy Card')]);
+    bluetooth.emitDevices([bleDevice('AA:01')]);
     await tester.pump();
     await tester.tap(find.text('AA:01'));
     await tester.pump();
@@ -146,7 +146,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CardDetailScreen), findsNothing);
-    expect(find.text('Scan for devices'), findsOneWidget);
+    expect(find.text('Scan for TCG Proxy Cards'), findsOneWidget);
   });
 
   testWidgets('explains that uploads need Bluetooth where it is missing', (
