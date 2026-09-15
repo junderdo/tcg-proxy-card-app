@@ -77,31 +77,34 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Card Search'),
-        actions: [
-          IconButton(
-            tooltip: 'Smaller cards',
-            icon: const Icon(Icons.zoom_out),
-            onPressed: _canZoomOut ? _zoomOut : null,
-          ),
-          IconButton(
-            tooltip: 'Larger cards',
-            icon: const Icon(Icons.zoom_in),
-            onPressed: _canZoomIn ? _zoomIn : null,
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Card Search')),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8),
-            child: SearchBar(
-              hintText: 'Search by name, color, or set',
-              leading: const Icon(Icons.search),
-              textInputAction: TextInputAction.search,
-              onChanged: _onQueryChanged,
-              onSubmitted: _onQuerySubmitted,
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SearchBar(
+                    hintText: 'Search by name, color, or set',
+                    leading: const Icon(Icons.search),
+                    textInputAction: TextInputAction.search,
+                    onChanged: _onQueryChanged,
+                    onSubmitted: _onQuerySubmitted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                _ZoomButton(
+                  tooltip: 'Smaller cards',
+                  icon: Icons.zoom_out,
+                  onPressed: _canZoomOut ? _zoomOut : null,
+                ),
+                _ZoomButton(
+                  tooltip: 'Larger cards',
+                  icon: Icons.zoom_in,
+                  onPressed: _canZoomIn ? _zoomIn : null,
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -149,6 +152,29 @@ class _HomeScreenState extends State<HomeScreen> {
       maxCardWidth: cardWidthSteps[_zoomStep],
       scrollController: _scrollController,
       onCardTap: _openCard,
+    );
+  }
+}
+
+class _ZoomButton extends StatelessWidget {
+  const _ZoomButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      icon: Icon(icon),
+      iconSize: 30,
+      constraints: const BoxConstraints.tightFor(width: 52, height: 52),
+      onPressed: onPressed,
     );
   }
 }

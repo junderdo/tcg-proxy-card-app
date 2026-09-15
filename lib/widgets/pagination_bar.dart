@@ -19,14 +19,19 @@ class PaginationBar extends StatelessWidget {
     return BottomAppBar(
       height: 64,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton.icon(
             onPressed: onPrevious,
             icon: const Icon(Icons.chevron_left),
             label: const Text('Previous'),
           ),
-          Text('Page $currentPage of $pageCount'),
+          Expanded(
+            child: Text(
+              'Page $currentPage of $pageCount',
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           TextButton.icon(
             onPressed: onNext,
             icon: const Icon(Icons.chevron_right),

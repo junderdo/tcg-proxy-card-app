@@ -84,6 +84,46 @@ void main() {
     }
   });
 
+  testWidgets('zoom buttons sit beside the search field with large targets', (
+    tester,
+  ) async {
+    await pumpHome(tester);
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byType(IconButton),
+      ),
+      findsNothing,
+    );
+    final searchBar = tester.getRect(find.byType(SearchBar));
+    final zoomOut = tester.getRect(find.byTooltip('Smaller cards'));
+    final zoomIn = tester.getRect(find.byTooltip('Larger cards'));
+    expect(zoomOut.left, greaterThanOrEqualTo(searchBar.right));
+    expect(zoomIn.left, greaterThanOrEqualTo(zoomOut.right));
+    for (final button in [zoomOut, zoomIn]) {
+      expect(button.center.dy, closeTo(searchBar.center.dy, 1));
+      expect(button.shortestSide, greaterThanOrEqualTo(48));
+    }
+    expect(
+      tester.getSize(find.byIcon(Icons.zoom_in)).width,
+      greaterThanOrEqualTo(28),
+    );
+  });
+
+  testWidgets('fits a 360px wide phone without overflow', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await pumpHome(tester);
+    await submitSearch(tester, 'goblin');
+    expect(tester.takeException(), isNull);
+    expect(tester.getRect(find.byTooltip('Larger cards')).right, lessThan(360));
+    final grid = tester.getRect(find.byType(CardGrid));
+    expect(tester.getTopLeft(find.byType(CardImage).first).dx - grid.left, 16);
+  });
+
   testWidgets('tapping a card opens its detail screen', (tester) async {
     await pumpHome(tester);
     await submitSearch(tester, 'goblin');

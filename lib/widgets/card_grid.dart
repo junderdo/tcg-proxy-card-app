@@ -21,12 +21,12 @@ class CardGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return GridView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: maxCardWidth,
         childAspectRatio: cardAspectRatio,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
       ),
       itemCount: cards.length,
       itemBuilder: (context, index) {
