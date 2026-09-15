@@ -18,4 +18,22 @@ samples, guidance on mobile development, and a full API reference.
 
 ## License
 
-Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
+SPDX-License-Identifier: `MPL-2.0`
+
+This Source Code Form is subject to the terms of the Mozilla Public License,
+v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain
+one at https://mozilla.org/MPL/2.0/. See [LICENSE](LICENSE).
+
+This notice covers every source file in this repository unless a file says
+otherwise.
+
+### Third-party licenses
+
+Dependencies keep their own licenses, and the MPL does not change them. In
+particular, [`flutter_blue_plus`](https://pub.dev/packages/flutter_blue_plus)
+(Bluetooth LE support) is under the custom
+[FlutterBluePlus License](https://github.com/chipweinberger/flutter_blue_plus/blob/master/LICENSE).
+It is free for personal, nonprofit and educational use, but any for-profit use
+(including development and testing) requires a paid commercial license, and it
+may send license telemetry at build time. If you build, use or redistribute
+this app, you must comply with that license separately.
