@@ -60,12 +60,17 @@ class _UploadDialogState extends State<UploadDialog> {
     );
   }
 
+  bool get _isWhiteout => _upload.kind == UploadKind.whiteout;
+
   String get _title => switch (_upload.stage) {
     UploadStage.preparing => 'Preparing image',
-    UploadStage.confirming => 'Send to ${_upload.device.name}?',
+    UploadStage.confirming =>
+      _isWhiteout
+          ? 'Clear ${_upload.device.name}?'
+          : 'Send to ${_upload.device.name}?',
     UploadStage.transferring => 'Uploading',
     UploadStage.refreshing => 'Refreshing display',
-    UploadStage.displayed => 'Uploaded',
+    UploadStage.displayed => _isWhiteout ? 'Cleared' : 'Uploaded',
     UploadStage.displayedNotSaved => 'Shown but not saved',
     UploadStage.failed => 'Upload failed',
     UploadStage.cancelled => 'Upload cancelled',
@@ -78,8 +83,13 @@ class _UploadDialogState extends State<UploadDialog> {
         Center(child: CircularProgressIndicator()),
         Text('Dithering the card art to the six panel colors…'),
       ],
-      UploadStage.confirming => const [
-        Text('This preview shows exactly what the card will display.'),
+      UploadStage.confirming => [
+        Text(
+          _isWhiteout
+              ? 'The card will be left blank white, which is how the display '
+                    'should be stored for more than 24 hours.'
+              : 'This preview shows exactly what the card will display.',
+        ),
       ],
       UploadStage.transferring => [
         LinearProgressIndicator(value: _upload.progress),
@@ -99,7 +109,9 @@ class _UploadDialogState extends State<UploadDialog> {
         _StatusLine(
           icon: Icons.check_circle,
           color: colors.primary,
-          text: 'The card is showing the new image.',
+          text: _isWhiteout
+              ? 'The card is blank and ready to be stored.'
+              : 'The card is showing the new image.',
         ),
       ],
       UploadStage.displayedNotSaved => [
@@ -127,7 +139,10 @@ class _UploadDialogState extends State<UploadDialog> {
       return [
         TextButton(onPressed: _upload.cancel, child: const Text('Cancel')),
         if (_upload.stage == UploadStage.confirming)
-          FilledButton(onPressed: _upload.send, child: const Text('Send')),
+          FilledButton(
+            onPressed: _upload.send,
+            child: Text(_isWhiteout ? 'Clear' : 'Send'),
+          ),
       ];
     }
     if (_upload.isFinished) {

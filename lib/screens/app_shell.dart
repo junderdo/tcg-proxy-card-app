@@ -70,6 +70,8 @@ class _AppShellState extends State<AppShell> {
         children: [
           HomeScreen(
             client: widget.client,
+            uploader: _uploader,
+            onShowDevices: _showDevices,
             buildCardDetail: (card) => CardDetailScreen(
               card: card,
               uploader: _uploader,

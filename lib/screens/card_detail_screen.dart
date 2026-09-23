@@ -2,13 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../bluetooth/ble_service.dart';
 import '../scryfall/models.dart';
 import '../upload/card_uploader.dart';
 import '../upload/panel_cooldown.dart';
 import '../widgets/card_image.dart';
-import '../widgets/cooldown_dialog.dart';
-import '../widgets/upload_dialog.dart';
+import '../widgets/upload_flow.dart';
 
 class CardDetailScreen extends StatefulWidget {
   const CardDetailScreen({
@@ -81,83 +79,17 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     _countdownTicker = null;
   }
 
-  Future<void> _onUploadPressed() async {
-    setState(() => _checkingDevice = true);
-    final readiness = await _uploader.checkReadiness();
-    if (!mounted) return;
-    setState(() => _checkingDevice = false);
-    switch (readiness) {
-      case NoDeviceConnected(:final bluetoothSupported):
-        await _offerDevicesTab(
-          title: 'No card connected',
-          message: bluetoothSupported
-              ? 'Connect to a TCG Proxy Card on the Devices tab to upload '
-                    'this image.'
-              : "Bluetooth isn't supported on this browser or device, so "
-                    "images can't be uploaded here.",
-          canShowDevices: bluetoothSupported,
-        );
-      case IncompatibleDevice(:final device):
-        await _offerDevicesTab(
-          title: "Can't upload to this device",
-          message:
-              "${device.name} doesn't offer the image upload service. "
-              'Connect to a different card on the Devices tab.',
-        );
-      case DeviceCheckFailed(:final device, :final error):
-        await _offerDevicesTab(
-          title: "Couldn't check ${device.name}",
-          message: error.message,
-        );
-      case DeviceCoolingDown(:final device):
-        await showDialog<void>(
-          context: context,
-          builder: (_) =>
-              CooldownDialog(cooldown: _uploader.cooldown, deviceId: device.id),
-        );
-      case ReadyToUpload(:final device):
-        await _upload(device);
-    }
-  }
-
-  Future<void> _offerDevicesTab({
-    required String title,
-    required String message,
-    bool canShowDevices = true,
-  }) async {
-    final showDevices = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(canShowDevices ? 'Cancel' : 'OK'),
-          ),
-          if (canShowDevices)
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Go to Devices'),
-            ),
-        ],
-      ),
+  Future<void> _onUploadPressed() {
+    final flow = UploadFlow(
+      uploader: _uploader,
+      onShowDevices: widget.onShowDevices,
     );
-    if (showDevices ?? false) widget.onShowDevices();
-  }
-
-  Future<void> _upload(BleDevice device) async {
-    final upload = _uploader.prepareUpload(
-      device: device,
-      imageUrl: _imageUrl!,
+    return flow.start(
+      context,
+      prepare: (device) =>
+          _uploader.prepareUpload(device: device, imageUrl: _imageUrl!),
+      onChecking: (checking) => setState(() => _checkingDevice = checking),
     );
-    upload.prepare();
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => UploadDialog(upload: upload),
-    );
-    upload.dispose();
   }
 
   @override

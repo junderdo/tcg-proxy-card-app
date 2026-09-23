@@ -5,20 +5,28 @@ import 'package:flutter/material.dart';
 import '../scryfall/models.dart';
 import '../scryfall/scryfall_client.dart';
 import '../search/card_search_controller.dart';
+import '../upload/card_uploader.dart';
 import '../widgets/card_grid.dart';
 import '../widgets/centered_message.dart';
 import '../widgets/pagination_bar.dart';
+import '../widgets/upload_flow.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.client,
+    required this.uploader,
     required this.buildCardDetail,
+    required this.onShowDevices,
     this.searchDebounce = const Duration(milliseconds: 500),
   });
 
   final ScryfallClient client;
+  final CardUploader uploader;
   final Widget Function(ScryfallCard card) buildCardDetail;
+
+  /// Leaves this screen for the Devices tab.
+  final VoidCallback onShowDevices;
   final Duration searchDebounce;
 
   @override
@@ -31,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final _search = CardSearchController(widget.client);
   final _scrollController = ScrollController(keepScrollOffset: false);
   Timer? _debounce;
+  bool _checkingDevice = false;
   int _zoomStep = 2;
   int _shownPage = 1;
 
@@ -64,6 +73,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _search.search(query);
   }
 
+  Future<void> _clearPanel() {
+    final flow = UploadFlow(
+      uploader: widget.uploader,
+      onShowDevices: widget.onShowDevices,
+    );
+    return flow.start(
+      context,
+      prepare: (device) => widget.uploader.prepareWhiteout(device: device),
+      onChecking: (checking) => setState(() => _checkingDevice = checking),
+    );
+  }
+
   bool get _canZoomIn => _zoomStep < cardWidthSteps.length - 1;
   bool get _canZoomOut => _zoomStep > 0;
 
@@ -79,7 +100,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Card Search')),
+      appBar: AppBar(
+        title: const Text('Card Search'),
+        actions: [
+          IconButton(
+            tooltip: 'Clear a card display',
+            icon: _checkingDevice
+                ? const SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
+                : const Icon(Icons.hide_image_outlined),
+            onPressed: _checkingDevice ? null : _clearPanel,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
