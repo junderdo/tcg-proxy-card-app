@@ -36,6 +36,20 @@ PanelImage convertToPanelImage(Uint8List encoded) {
   );
 }
 
+/// A blank white panel. The display should be left white before it is
+/// stored for more than 24 hours.
+PanelImage whitePanelImage() {
+  const pixels = PanelFrame.width * PanelFrame.height;
+  final indices = Uint8List(pixels)
+    ..fillRange(0, pixels, PanelColor.white.index);
+  return PanelImage(
+    frame: PanelFrame.pack(indices, PanelFrame.width, PanelFrame.height),
+    previewPng: img.encodePng(
+      paletteIndicesToImage(indices, PanelFrame.width, PanelFrame.height),
+    ),
+  );
+}
+
 img.Image _decode(Uint8List encoded) {
   const failure = FormatException("The card image couldn't be decoded");
   try {

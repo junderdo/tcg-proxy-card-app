@@ -4,23 +4,40 @@ import 'package:tcg_proxy_card_app/screens/home_screen.dart';
 import 'package:tcg_proxy_card_app/scryfall/models.dart';
 import 'package:tcg_proxy_card_app/widgets/card_grid.dart';
 import 'package:tcg_proxy_card_app/widgets/card_image.dart';
+import 'package:tcg_proxy_card_app/upload/panel_frame.dart';
 import 'package:tcg_proxy_card_app/widgets/pagination_bar.dart';
 
+import '../support/fake_proxy_card.dart';
 import '../support/fake_scryfall.dart';
+import '../support/upload_harness.dart';
 
 Widget cardDetailStub(ScryfallCard card) =>
     Scaffold(body: Text('Detail for ${card.name}'));
 
 void main() {
-  late FakeScryfall scryfall;
+  const deviceId = 'AA:01';
 
-  setUp(() => scryfall = FakeScryfall());
+  late FakeScryfall scryfall;
+  late UploadHarness harness;
+  late FakeProxyCard proxyCard;
+  late int showDevicesCalls;
+
+  setUp(() {
+    scryfall = FakeScryfall();
+    harness = UploadHarness();
+    proxyCard = FakeProxyCard(harness.bluetooth);
+    showDevicesCalls = 0;
+  });
+
+  tearDown(() => harness.dispose());
 
   Future<void> pumpHome(WidgetTester tester) {
     return tester.pumpWidget(
       MaterialApp(
         home: HomeScreen(
           client: scryfall.client(),
+          uploader: harness.uploader,
+          onShowDevices: () => showDevicesCalls++,
           buildCardDetail: cardDetailStub,
           searchDebounce: Duration.zero,
         ),
@@ -55,6 +72,8 @@ void main() {
       MaterialApp(
         home: HomeScreen(
           client: scryfall.client(),
+          uploader: harness.uploader,
+          onShowDevices: () => showDevicesCalls++,
           buildCardDetail: cardDetailStub,
         ),
       ),
@@ -98,13 +117,12 @@ void main() {
   ) async {
     await pumpHome(tester);
 
-    expect(
-      find.descendant(
-        of: find.byType(AppBar),
-        matching: find.byType(IconButton),
-      ),
-      findsNothing,
-    );
+    for (final icon in [Icons.zoom_in, Icons.zoom_out]) {
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: find.byIcon(icon)),
+        findsNothing,
+      );
+    }
     final searchBar = tester.getRect(find.byType(SearchBar));
     final zoomOut = tester.getRect(find.byTooltip('Smaller cards'));
     final zoomIn = tester.getRect(find.byTooltip('Larger cards'));
@@ -131,6 +149,71 @@ void main() {
     expect(tester.getRect(find.byTooltip('Larger cards')).right, lessThan(360));
     final grid = tester.getRect(find.byType(CardGrid));
     expect(tester.getTopLeft(find.byType(CardImage).first).dx - grid.left, 16);
+  });
+
+  group('clearing a card display', () {
+    Future<void> pumpFrames(WidgetTester tester, [int count = 10]) async {
+      for (var i = 0; i < count; i++) {
+        await tester.pump();
+      }
+    }
+
+    Future<void> tapClear(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Clear a card display'));
+      await pumpFrames(tester);
+    }
+
+    testWidgets('sends an all-white frame and reports the card cleared', (
+      tester,
+    ) async {
+      await harness.connect(deviceId);
+      await pumpHome(tester);
+
+      await tapClear(tester);
+      expect(find.text('Clear TCG Proxy Card?'), findsOneWidget);
+      expect(find.textContaining('24 hours'), findsOneWidget);
+      await tester.tap(find.text('Clear'));
+      await pumpFrames(tester, 30);
+
+      expect(find.text('Cleared'), findsOneWidget);
+      expect(
+        find.text('The card is blank and ready to be stored.'),
+        findsOneWidget,
+      );
+      final frame = proxyCard.received.toBytes();
+      expect(frame, hasLength(PanelFrame.sizeInBytes));
+      expect(frame.every((byte) => byte == 0x11), isTrue);
+      expect(harness.downloads, isEmpty);
+    });
+
+    testWidgets('offers the Devices tab when no card is connected', (
+      tester,
+    ) async {
+      await pumpHome(tester);
+
+      await tapClear(tester);
+
+      expect(find.text('No card connected'), findsOneWidget);
+      await tester.tap(find.text('Go to Devices'));
+      await tester.pumpAndSettle();
+      expect(showDevicesCalls, 1);
+      expect(harness.bluetooth.writes, isEmpty);
+    });
+
+    testWidgets('blocks the clear while the panel is cooling down', (
+      tester,
+    ) async {
+      await harness.connect(deviceId);
+      harness.store.saved[deviceId] = harness.clock.now.add(
+        const Duration(seconds: 100),
+      );
+      await pumpHome(tester);
+
+      await tapClear(tester);
+
+      expect(find.text('Please wait before uploading'), findsOneWidget);
+      expect(harness.bluetooth.writes, isEmpty);
+    });
   });
 
   testWidgets('tapping a card opens its detail screen', (tester) async {

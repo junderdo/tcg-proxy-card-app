@@ -115,8 +115,23 @@ class CardUploader {
   CardUploadController prepareUpload({
     required BleDevice device,
     required String imageUrl,
-  }) => CardUploadController._(this, device, imageUrl);
+  }) => CardUploadController._(this, device, UploadKind.cardArt, () async {
+    final encoded = await environment.downloadImage(imageUrl);
+    return environment.convertImage(encoded);
+  });
+
+  /// Whites out the panel, which is how it should be left before storing the
+  /// card for more than 24 hours.
+  CardUploadController prepareWhiteout({required BleDevice device}) =>
+      CardUploadController._(
+        this,
+        device,
+        UploadKind.whiteout,
+        () async => whitePanelImage(),
+      );
 }
+
+enum UploadKind { cardArt, whiteout }
 
 enum UploadStage {
   preparing,
@@ -129,13 +144,19 @@ enum UploadStage {
   cancelled,
 }
 
-/// One upload of one card image, from conversion to the panel refresh.
+/// One upload of one panel image, from conversion to the panel refresh.
 class CardUploadController extends ChangeNotifier {
-  CardUploadController._(this._uploader, this.device, this.imageUrl);
+  CardUploadController._(
+    this._uploader,
+    this.device,
+    this.kind,
+    this._loadImage,
+  );
 
   final CardUploader _uploader;
   final BleDevice device;
-  final String imageUrl;
+  final UploadKind kind;
+  final Future<PanelImage> Function() _loadImage;
   UploadSession? _session;
   bool _disposed = false;
 
@@ -165,8 +186,7 @@ class CardUploadController extends ChangeNotifier {
 
   Future<void> prepare() async {
     try {
-      final encoded = await _environment.downloadImage(imageUrl);
-      final converted = await _environment.convertImage(encoded);
+      final converted = await _loadImage();
       if (stage != UploadStage.preparing) return;
       image = converted;
       _setStage(UploadStage.confirming);

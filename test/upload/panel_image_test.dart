@@ -55,6 +55,21 @@ void main() {
     expect(frame[100], 0x00);
   });
 
+  test('builds an all-white panel with a white preview', () {
+    final white = whitePanelImage();
+
+    expect(white.frame, hasLength(PanelFrame.sizeInBytes));
+    expect(white.frame.every((byte) => byte == 0x11), isTrue);
+    final preview = img.decodePng(white.previewPng)!;
+    expect((preview.width, preview.height), (400, 600));
+    expect(
+      preview.every(
+        (pixel) => pixel.r == 255 && pixel.g == 255 && pixel.b == 255,
+      ),
+      isTrue,
+    );
+  });
+
   test('rejects data that is not a complete image', () {
     final png = img.encodePng(img.Image(width: 1, height: 1));
     expect(() => convertToPanelImage(png.sublist(0, 8)), throwsFormatException);
