@@ -35,7 +35,7 @@ abstract interface class BleService {
   /// Emits the current state on listen, then every change.
   Stream<BleAdapterState> get adapterState;
 
-  /// Emits the devices seen so far in the current scan, possibly repeated.
+  /// Emits devices seen during the current scan, possibly repeated.
   Stream<List<BleDevice>> get scanResults;
 
   /// Emits the ID of each device that becomes disconnected.
