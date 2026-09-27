@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'bluetooth/ble_service.dart';
-import 'bluetooth/flutter_blue_plus_service.dart';
+import 'bluetooth/universal_ble_service.dart';
 import 'screens/app_shell.dart';
 import 'scryfall/scryfall_client.dart';
 
 void main() {
   runApp(
-    TcgProxyCardApp(
-      client: ScryfallClient(),
-      bluetooth: FlutterBluePlusService(),
-    ),
+    TcgProxyCardApp(client: ScryfallClient(), bluetooth: UniversalBleService()),
   );
 }
 
